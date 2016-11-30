@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+.bar {
+  fill: steelblue;
+}
+
+.bar:hover {
+  fill: brown;
+}
+
+</style>
+
+<body>
+	<script src = "d3.min.js"></script>
+	<script src = "jquery.js"></script>
+    <script>
+        var data = [
+            {"day":"10-May-12", "values":{
+            "precipitation":16,
+            "minimumTemperature":20,
+            "maximumTemperature":15
+            }},
+            {"day":"8-May-12", "values":{
+            "precipitation":13,
+            "minimumTemperature":18,
+            "maximumTemperature":17
+            }},
+            {"day":"6-May-12", "values":{
+            "precipitation":10,
+            "minimumTemperature":17,
+            "maximumTemperature":18
+            }},
+            {"day":"4-May-12", "values":{
+            "precipitation":15,
+            "minimumTemperature":16,
+            "maximumTemperature":20
+            }},
+            {"day":"3-May-12", "values":{
+            "precipitation":18,
+            "minimumTemperature":15,
+            "maximumTemperature":22
+            }},
+            {"day":"1-May-12 ", "values":{
+            "precipitation":20,
+            "minimumTemperature":13,
+            "maximumTemperature":24
+            }}      
+        ];
+
+        var margin = {top: 20, right: 20, bottom: 30, left: 50},
+        width = 960 - margin.left - margin.right, //890
+        height = 500 - margin.top - margin.bottom; //450
+
+        var parseTime = d3.timeParse("%d-%b-%y");
+
+        var x = d3.scaleTime().range([0, width]);
+        var y0 = d3.scaleLinear().range([height, 0]);
+        var y1 = d3.scaleLinear().range([height, 0]);
+
+        var minline = d3.line()
+        .x(function(d) { return x(d.day); })
+        .y(function(d) { return y0(d.minimumTemperature); });
+
+        var maxline = d3.line()
+        .x(function(d) { return x(d.day); })
+        .y(function(d) { return y0(d.maximumTemperature); });
+
+        var preciline = d3.line()
+        .x(function(d) { return x(d.day); })
+        .y(function(d) { return y1(d.precipitation); });
+
+        var svg = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform",
+        "translate(" + margin.left + "," + margin.top + ")");
+
+        data.forEach(function(d) {
+            d.day = parseTime(d.day);
+            d.minimumTemperature = +d.values.minimumTemperature;
+            d.maximumTemperature = +d.values.maximumTemperature;
+            d.precipitation = +d.values.precipitation;
+        });
+
+        x.domain(d3.extent(data, function(d) { return d.day; }));
+        y0.domain([0, d3.max(data, function(d) { return d.minimumTemperature,d.maximumTemperature})]);
+        y1.domain([0, d3.max(data, function(d) {return d.precipitation})]);
+
+        svg.append("path")
+        .data([data])
+        .attr("class", "line")
+        .attr("d", minline)
+        .on("click",displayBarChart);
+
+        svg.append("path")
+        .data([data])
+        .attr("class", "line")
+        .style("stroke", "red")
+        .attr("d", maxline)
+        .on("click",displayBarChart);
+
+        svg.append("path")
+        .data([data])
+        .attr("class", "line")
+        .style("stroke", "green")
+        .attr("d", preciline)
+        .attr("id", "preciline")
+        .on("click",displayBarChart);
+
+        svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+        svg.append("g")
+        .attr("class", "axisSteelBlue")
+        .call(d3.axisLeft(y0));
+
+        svg.append("g")
+        .attr("class", "axisRed")
+        .attr("transform", "translate( " + width + ", 0 )")
+        .call(d3.axisRight(y1));
+
+        function displayBarChart(id){
+        console.log(id);
+        }
+    </script>
+
+</body>
+</html>
