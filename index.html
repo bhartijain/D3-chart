@@ -59,6 +59,13 @@
         width = 960 - margin.left - margin.right, //890
         height = 500 - margin.top - margin.bottom; //450
 
+        function parseDate(s) {
+            var months = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,
+                        jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+            var p = s.split('-');
+            return new Date(p[2], months[p[1].toLowerCase()], p[0]);
+        }
+
         var parseTime = d3.timeParse("%d-%b-%y");
 
         var x = d3.scaleTime().range([0, width]);
@@ -85,10 +92,10 @@
         "translate(" + margin.left + "," + margin.top + ")");
 
         data.forEach(function(d) {
-            d.day = parseTime(d.day);
-            d.minimumTemperature = +d.values.minimumTemperature;
-            d.maximumTemperature = +d.values.maximumTemperature;
-            d.precipitation = +d.values.precipitation;
+            d.day = parseDate(d.day);
+            d.minimumTemperature = d.values.minimumTemperature;
+            d.maximumTemperature = d.values.maximumTemperature;
+            d.precipitation = d.values.precipitation;
         });
 
         x.domain(d3.extent(data, function(d) { return d.day; }));
@@ -129,8 +136,8 @@
         .attr("transform", "translate( " + width + ", 0 )")
         .call(d3.axisRight(y1));
 
-        function displayBarChart(id){
-        console.log(id);
+        function displayBarChart(){
+            console.log(data);
         }
     </script>
 
