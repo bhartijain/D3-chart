@@ -1,145 +1,108 @@
-
 <!DOCTYPE html>
-<meta charset="utf-8">
-<style> /* set the CSS */
+<style>
 
 .line {
   fill: none;
   stroke: steelblue;
-  stroke-width: 2px;
+  stroke-width: 1.5px;
 }
-.bar {
-  fill: steelblue;
-}
-
-.bar:hover {
-  fill: brown;
-}
-
 </style>
+<svg width="960" height="500"></svg>
+<script src="d3.min.js"></script>
+<script>
 
-<body>
-	<script src = "d3.min.js"></script>
-	<script src = "jquery.js"></script>
-    <script>
-        var data = [
-            {"day":"10-May-12", "values":{
-            "precipitation":16,
-            "minimumTemperature":20,
-            "maximumTemperature":15
-            }},
-            {"day":"8-May-12", "values":{
-            "precipitation":13,
-            "minimumTemperature":18,
-            "maximumTemperature":17
-            }},
-            {"day":"6-May-12", "values":{
-            "precipitation":10,
-            "minimumTemperature":17,
-            "maximumTemperature":18
-            }},
-            {"day":"4-May-12", "values":{
-            "precipitation":15,
-            "minimumTemperature":16,
-            "maximumTemperature":20
-            }},
-            {"day":"3-May-12", "values":{
-            "precipitation":18,
-            "minimumTemperature":15,
-            "maximumTemperature":22
-            }},
-            {"day":"1-May-12 ", "values":{
-            "precipitation":20,
-            "minimumTemperature":13,
-            "maximumTemperature":24
-            }}      
-        ];
+    var svg = d3.select("svg"),
+    margin = {top: 20, right: 80, bottom: 30, left: 50},
+    width = svg.attr("width") - margin.left - margin.right,
+    height = svg.attr("height") - margin.top - margin.bottom,
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        var margin = {top: 20, right: 20, bottom: 30, left: 50},
-        width = 960 - margin.left - margin.right, //890
-        height = 500 - margin.top - margin.bottom; //450
+    var parseTime = d3.timeParse("%e-%b-%y");
 
-        function parseDate(s) {
-            var months = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,
-                        jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
-            var p = s.split('-');
-            return new Date(p[2], months[p[1].toLowerCase()], p[0]);
-        }
+    var x = d3.scaleTime().range([0, width]),
+    y0 = d3.scaleLinear().range([height, 0]),
+    y1 = d3.scaleLinear().range([height, 0]),
+    z = d3.scaleOrdinal(d3.schemeCategory10);
 
-        var parseTime = d3.timeParse("%d-%b-%y");
+    var leftLine = d3.line()
+    .curve(d3.curveBasis)
+    .x(function(d) { return x(d.day); })
+    .y(function(d) { return y0(d.leftTemperature); }); //To show minimumTemprature and maximumTemprature
 
-        var x = d3.scaleTime().range([0, width]);
-        var y0 = d3.scaleLinear().range([height, 0]);
-        var y1 = d3.scaleLinear().range([height, 0]);
+    var rightLine = d3.line()
+    .curve(d3.curveBasis)
+    .x(function(d) { return x(d.day); })
+    .y(function(d) { return y1(d.rightTemperature); }); //to show pericipitaion
 
-        var minline = d3.line()
-        .x(function(d) { return x(d.day); })
-        .y(function(d) { return y0(d.minimumTemperature); });
 
-        var maxline = d3.line()
-        .x(function(d) { return x(d.day); })
-        .y(function(d) { return y0(d.maximumTemperature); });
+    var data = [
+        {day:"1-May-12","minimumTemprature":"58.13", "maximumTemprature":"58.13", "precipitation": "43"},
+        {day:"30-Apr-12","minimumTemprature":"53.98" , "maximumTemprature":"48.13", "precipitation": "53"},
+        {day:"27-Apr-12","minimumTemprature":"67.00", "maximumTemprature":"38.13", "precipitation": "63"},
+        {day:"26-Apr-12","minimumTemprature":"89.70", "maximumTemprature":"28.13", "precipitation": "73"},
+        {day:"25-Apr-12","minimumTemprature":"99.00", "maximumTemprature":"18.13", "precipitation": "83"}
+    ];
 
-        var preciline = d3.line()
-        .x(function(d) { return x(d.day); })
-        .y(function(d) { return y1(d.precipitation); });
+    data.forEach(function(d){
+        d.day = parseTime(d.day);
+    });
 
-        var svg = d3.select("body").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform",
-        "translate(" + margin.left + "," + margin.top + ")");
+    data.columns = ["day", "minimumTemprature", "maximumTemprature", "precipitation"];
 
-        data.forEach(function(d) {
-            d.day = parseDate(d.day);
-            d.minimumTemperature = d.values.minimumTemperature;
-            d.maximumTemperature = d.values.maximumTemperature;
-            d.precipitation = d.values.precipitation;
-        });
+    var tempratureValues = data.columns.slice(1).map(function(id) {
+        return {
+            id: id,
+            values: data.map(function(d) {
+                if (id == "precipitation")
+                    return {day: d.day, rightTemperature: d[id]};
+                return {day: d.day, leftTemperature: d[id]};
+            })
+        };
+    });
+  
 
-        x.domain(d3.extent(data, function(d) { return d.day; }));
-        y0.domain([0, d3.max(data, function(d) { return d.minimumTemperature,d.maximumTemperature})]);
-        y1.domain([0, d3.max(data, function(d) {return d.precipitation})]);
+    x.domain(d3.extent(data, function(d) { return d.day; }));
 
-        svg.append("path")
-        .data([data])
-        .attr("class", "line")
-        .attr("d", minline)
-        .on("click",displayBarChart);
+    y0.domain([
+        d3.min(tempratureValues, function(c) { return d3.min(c.values, function(d) { return d.leftTemperature; }); }),
+        d3.max(tempratureValues, function(c) { return d3.max(c.values, function(d) { return d.leftTemperature; }); })
+    ]);
 
-        svg.append("path")
-        .data([data])
-        .attr("class", "line")
-        .style("stroke", "red")
-        .attr("d", maxline)
-        .on("click",displayBarChart);
+    y1.domain([
+        d3.min(tempratureValues, function(c) { return d3.min(c.values, function(d) { return d.rightTemperature; }); }),
+        d3.max(tempratureValues, function(c) { return d3.max(c.values, function(d) { return d.rightTemperature; }); })
+    ]);
 
-        svg.append("path")
-        .data([data])
-        .attr("class", "line")
-        .style("stroke", "green")
-        .attr("d", preciline)
-        .attr("id", "preciline")
-        .on("click",displayBarChart);
 
-        svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
+    z.domain(tempratureValues.map(function(c) { return c.id; }));
 
-        svg.append("g")
-        .attr("class", "axisSteelBlue")
-        .call(d3.axisLeft(y0));
+    g.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
 
-        svg.append("g")
-        .attr("class", "axisRed")
-        .attr("transform", "translate( " + width + ", 0 )")
-        .call(d3.axisRight(y1));
+    g.append("g")
+      .attr("class", "axis")
+      .call(d3.axisLeft(y0));
 
-        function displayBarChart(){
-            console.log(data);
-        }
-    </script>
+    g.append("g")
+      .attr("class", "axis")
+      .call(d3.axisRight(y1));
+     
+    var tempValue = g.selectAll(".tempValue")
+    .data(tempratureValues)
+    .enter().append("g")
+    .attr("class", "tempValue");
 
-</body>
-</html>
+    tempValue.append("path")
+      .attr("class", "line")
+      .attr("d", function(d) { return leftLine(d.values); })
+      .style("stroke", function(d) { return z(d.id); });
+
+
+    tempValue.append("path")
+      .attr("class", "line")
+      .attr("d", function(d) { return rightLine(d.values); })
+      .style("stroke", function(d) { return z(d.id); });
+
+</script>
