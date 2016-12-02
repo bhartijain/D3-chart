@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<html>
+<head>
 <style>
 
 .line {
@@ -25,12 +27,20 @@ div.tooltip {
 .bar:hover {
   fill: brown;
 }
+#lineChart{
+    width : 950px;
+    height : 500px;
+}
 </style>
-<svg width="960" height="500"></svg>
 <script src="d3.min.js"></script>
-<script>
+</head>
+<body>
+    <div id = "lineChart"></div>
+    <div id ="barChart"></div>
 
-    var svg = d3.select("svg"),
+    <script>
+
+    var svg = d3.select("#lineChart"),
     margin = {top: 20, right: 80, bottom: 30, left: 50},
     width = svg.attr("width") - margin.left - margin.right,
     height = svg.attr("height") - margin.top - margin.bottom,
@@ -107,7 +117,7 @@ div.tooltip {
       .attr("transform", "translate(" + width + " ,0)")
       .call(d3.axisRight(y1));
      
-     var div = d3.select("body").append("div")
+     var div = d3.select("#lineChart").append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
 
@@ -125,7 +135,6 @@ div.tooltip {
        div.html(formatTime(d.values.day) + "<br/>" + d.id)
          .style("left", (d3.event.pageX) + "px")
          .style("top", (d3.event.pageY - 28) + "px");
-         
        })
      .on("mouseout", function(d) {
        div.transition()
@@ -149,16 +158,13 @@ tempValue.append("path")
 
 var drawBarChart = function(d){
     var barChartData = d;
-      console.log(barChartData);
  var barMargin = {top: 20, right: 20, bottom: 30, left: 50},
     bWidth = svg.attr("width") - barMargin.left - barMargin.right,
     bHeight = svg.attr("height") - barMargin.top - barMargin.bottom;
 
 var bx = d3.scaleBand().rangeRound([0, width]).padding(0.1),
     by = d3.scaleLinear().rangeRound([height, 0]);
-var svgBar;
-
-svgBar = d3.select("body").append("svg")
+var svgBar = d3.select("body").append("svg")
     .attr("width", bWidth + margin.left + margin.right)
     .attr("height", bHeight + margin.top + margin.bottom)
   .append("g")
@@ -178,10 +184,9 @@ svgBar.append("g")
 svgBar.append("g")
        .attr("class", "axis")
       .call(d3.axisLeft(by));
-svgBar.exit().remove();
+
 svgBar.selectAll(".bar")
-      .data(barChartData)
-      .enter().append("rect")
+        .data(barChartData).enter().append("rect")
       .attr("class", "bar")
       .attr("x", function(d) {console.log(d); return bx(d.day); })
       .attr("width", bx.bandwidth())
@@ -191,3 +196,8 @@ svgBar.selectAll(".bar")
 
 
 </script>
+
+</body>
+</html>
+
+
