@@ -6,6 +6,25 @@
   stroke: steelblue;
   stroke-width: 1.5px;
 }
+div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 60px;
+  height: 28px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.bar {
+  fill: steelblue;
+}
+
+.bar:hover {
+  fill: brown;
+}
 </style>
 <svg width="960" height="500"></svg>
 <script src="d3.min.js"></script>
@@ -17,30 +36,25 @@
     height = svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var parseTime = d3.timeParse("%e-%b-%y");
+    var parseTime = d3.timeParse("%d-%b-%y");
+    var formatTime = d3.timeFormat("%e %B");
 
     var x = d3.scaleTime().range([0, width]),
     y0 = d3.scaleLinear().range([height, 0]),
     y1 = d3.scaleLinear().range([height, 0]),
     z = d3.scaleOrdinal(d3.schemeCategory10);
 
-    var leftLine = d3.line()
-    .curve(d3.curveBasis)
-    .x(function(d) { return x(d.day); })
-    .y(function(d) { return y0(d.leftTemperature); }); //To show minimumTemprature and maximumTemprature
-
-    var rightLine = d3.line()
-    .curve(d3.curveBasis)
-    .x(function(d) { return x(d.day); })
-    .y(function(d) { return y1(d.rightTemperature); }); //to show pericipitaion
-
+    var line = d3.line()
+      .curve(d3.curveBasis)
+      .x(function(d) { return x(d.day); })
+      .y(function(d) { return y0(d.temperature); });
 
     var data = [
-        {day:"1-May-12","minimumTemprature":"58.13", "maximumTemprature":"58.13", "precipitation": "43"},
-        {day:"30-Apr-12","minimumTemprature":"53.98" , "maximumTemprature":"48.13", "precipitation": "53"},
-        {day:"27-Apr-12","minimumTemprature":"67.00", "maximumTemprature":"38.13", "precipitation": "63"},
-        {day:"26-Apr-12","minimumTemprature":"89.70", "maximumTemprature":"28.13", "precipitation": "73"},
-        {day:"25-Apr-12","minimumTemprature":"99.00", "maximumTemprature":"18.13", "precipitation": "83"}
+        {day:"1-May-12","minimumTemprature":"63.4", "maximumTemprature":"62.7", "precipitation": "72.2"},
+        {day:"30-Apr-12","minimumTemprature":"58.0" , "maximumTemprature":"59.9", "precipitation": "67.7"},
+        {day:"27-Apr-12","minimumTemprature":"50.3", "maximumTemprature":"59.1", "precipitation": "69.4"},
+        {day:"26-Apr-12","minimumTemprature":"55.7", "maximumTemprature":"58.8", "precipitation": "68.0"},
+        {day:"25-Apr-12","minimumTemprature":"72.2", "maximumTemprature":"42.7", "precipitation": "55.4"}
     ];
 
     data.forEach(function(d){
@@ -49,30 +63,27 @@
 
     data.columns = ["day", "minimumTemprature", "maximumTemprature", "precipitation"];
 
-    var tempratureValues = data.columns.slice(1).map(function(id) {
-        return {
-            id: id,
-            values: data.map(function(d) {
-                if (id == "precipitation")
-                    return {day: d.day, rightTemperature: d[id]};
-                return {day: d.day, leftTemperature: d[id]};
-            })
-        };
-    });
-  
 
+    var tempratureValues = data.columns.slice(1).map(function(id) {
+    return {
+      id: id,
+      values: data.map(function(d) {
+        return {day: d.day, temperature: d[id]};
+      })
+    };
+  });
+    console.log(tempratureValues);
     x.domain(d3.extent(data, function(d) { return d.day; }));
 
     y0.domain([
-        d3.min(tempratureValues, function(c) { return d3.min(c.values, function(d) { return d.leftTemperature; }); }),
-        d3.max(tempratureValues, function(c) { return d3.max(c.values, function(d) { return d.leftTemperature; }); })
+        d3.min(tempratureValues, function(c) {  return d3.min(c.values, function(d) { return d.temperature; }); }),
+        d3.max(tempratureValues, function(c) {  return d3.max(c.values, function(d) { return d.temperature; }); })
     ]);
 
     y1.domain([
-        d3.min(tempratureValues, function(c) { return d3.min(c.values, function(d) { return d.rightTemperature; }); }),
-        d3.max(tempratureValues, function(c) { return d3.max(c.values, function(d) { return d.rightTemperature; }); })
+        d3.min(tempratureValues, function(c) {  return d3.min(c.values, function(d) { return d.temperature; }); }),
+        d3.max(tempratureValues, function(c) {  return d3.max(c.values, function(d) { return d.temperature; }); })
     ]);
-
 
     z.domain(tempratureValues.map(function(c) { return c.id; }));
 
@@ -82,27 +93,101 @@
       .call(d3.axisBottom(x));
 
     g.append("g")
-      .attr("class", "axis")
-      .call(d3.axisLeft(y0));
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(y0))
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("fill", "#000")
+      .text("Temperature, ºF");
 
     g.append("g")
       .attr("class", "axis")
+      .attr("transform", "translate(" + width + " ,0)")
       .call(d3.axisRight(y1));
      
+     var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+     
+
     var tempValue = g.selectAll(".tempValue")
     .data(tempratureValues)
     .enter().append("g")
-    .attr("class", "tempValue");
-
-    tempValue.append("path")
+    .attr("class", "tempValue")
+    .on("click", function(d){drawBarChart(d.values);})
+     .on("mouseover", function(d) {
+       div.transition()
+         .duration(200)
+         .style("opacity", .9);
+       div.html(formatTime(d.values.day) + "<br/>" + d.id)
+         .style("left", (d3.event.pageX) + "px")
+         .style("top", (d3.event.pageY - 28) + "px");
+         
+       })
+     .on("mouseout", function(d) {
+       div.transition()
+         .duration(500)
+         .style("opacity", 0);
+       });
+     
+tempValue.append("path")
       .attr("class", "line")
-      .attr("d", function(d) { return leftLine(d.values); })
+      .attr("d", function(d) { return line(d.values); })
       .style("stroke", function(d) { return z(d.id); });
 
+   tempValue.append("text")
+      .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
+      .attr("transform", function(d) { return "translate(" + x(d.value.day) + "," + y0(d.value.temperature) + ")"; })
+      .attr("x", 3)
+      .attr("dy", "0.35em")
+      .style("font", "10px sans-serif")
+      .text(function(d) { return d.id; });
+  /***********************************Bar chart *******************************/
 
-    tempValue.append("path")
-      .attr("class", "line")
-      .attr("d", function(d) { return rightLine(d.values); })
-      .style("stroke", function(d) { return z(d.id); });
+var drawBarChart = function(d){
+    var barChartData = d;
+      console.log(barChartData);
+ var barMargin = {top: 20, right: 20, bottom: 30, left: 50},
+    bWidth = svg.attr("width") - barMargin.left - barMargin.right,
+    bHeight = svg.attr("height") - barMargin.top - barMargin.bottom;
+
+var bx = d3.scaleBand().rangeRound([0, width]).padding(0.1),
+    by = d3.scaleLinear().rangeRound([height, 0]);
+var svgBar;
+
+svgBar = d3.select("body").append("svg")
+    .attr("width", bWidth + margin.left + margin.right)
+    .attr("height", bHeight + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+
+   bx.domain(data.map(function(d) { return d.day; }));
+  by.domain([0, d3.max(barChartData, function(c) {  return c.temperature; })
+]);
+
+
+svgBar.append("g")
+   .attr("class", "axis")
+      .attr("transform", "translate(0," + bHeight + ")")
+      .call(d3.axisBottom(bx));
+
+svgBar.append("g")
+       .attr("class", "axis")
+      .call(d3.axisLeft(by));
+svgBar.exit().remove();
+svgBar.selectAll(".bar")
+      .data(barChartData)
+      .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) {console.log(d); return bx(d.day); })
+      .attr("width", bx.bandwidth())
+      .attr("y", function(d) { return by(d.temperature); })
+      .attr("height", function(d) { return bHeight - by(d.temperature); });
+}
+
 
 </script>
