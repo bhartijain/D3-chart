@@ -35,15 +35,14 @@ div.tooltip {
 <script src="d3.min.js"></script>
 </head>
 <body>
-    <div id = "lineChart"></div>
+    <div id = "lineChart" ></div>
     <div id ="barChart"></div>
 
     <script>
-
-    var svg = d3.select("#lineChart"),
+    var svg = d3.select("#lineChart").append("svg").attr("width","960").attr("height","500"),
     margin = {top: 20, right: 80, bottom: 30, left: 50},
-    width = svg.attr("width") - margin.left - margin.right,
-    height = svg.attr("height") - margin.top - margin.bottom,
+    width = 890; //svg.attr("width") - margin.left - margin.right,
+    height = 450; //svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var parseTime = d3.timeParse("%d-%b-%y");
@@ -76,12 +75,13 @@ div.tooltip {
 
     var tempratureValues = data.columns.slice(1).map(function(id) {
     return {
-      id: id,
-      values: data.map(function(d) {
-        return {day: d.day, temperature: d[id]};
-      })
-    };
-  });
+        id: id,
+        values: data.map(function(d) {
+            return {day: d.day, temperature: d[id]};
+        })
+        };
+    });
+
     console.log(tempratureValues);
     x.domain(d3.extent(data, function(d) { return d.day; }));
 
@@ -105,7 +105,7 @@ div.tooltip {
     g.append("g")
       .attr("class", "axis axis--y")
       .call(d3.axisLeft(y0))
-    .append("text")
+      .append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 6)
       .attr("dy", "0.71em")
@@ -117,82 +117,82 @@ div.tooltip {
       .attr("transform", "translate(" + width + " ,0)")
       .call(d3.axisRight(y1));
      
-     var div = d3.select("#lineChart").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
+    var div = d3.select("#lineChart").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
 
      
 
     var tempValue = g.selectAll(".tempValue")
-    .data(tempratureValues)
-    .enter().append("g")
-    .attr("class", "tempValue")
-    .on("click", function(d){drawBarChart(d.values);})
-     .on("mouseover", function(d) {
-       div.transition()
-         .duration(200)
-         .style("opacity", .9);
-       div.html(formatTime(d.values.day) + "<br/>" + d.id)
-         .style("left", (d3.event.pageX) + "px")
-         .style("top", (d3.event.pageY - 28) + "px");
-       })
-     .on("mouseout", function(d) {
-       div.transition()
-         .duration(500)
-         .style("opacity", 0);
-       });
+        .data(tempratureValues)
+        .enter().append("g")
+        .attr("class", "tempValue")
+        .on("click", function(d){drawBarChart(d.values);})
+        .on("mouseover", function(d) {
+            div.transition()
+            .duration(200)
+            .style("opacity", .9);
+            div.html(formatTime(d.values.day) + "<br/>" + d.id)
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            div.transition()
+            .duration(500)
+            .style("opacity", 0);
+        });
      
-tempValue.append("path")
-      .attr("class", "line")
-      .attr("d", function(d) { return line(d.values); })
-      .style("stroke", function(d) { return z(d.id); });
+    tempValue.append("path")
+        .attr("class", "line")
+        .attr("d", function(d) { return line(d.values); })
+        .style("stroke", function(d) { return z(d.id); });
 
-   tempValue.append("text")
-      .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
-      .attr("transform", function(d) { return "translate(" + x(d.value.day) + "," + y0(d.value.temperature) + ")"; })
-      .attr("x", 3)
-      .attr("dy", "0.35em")
-      .style("font", "10px sans-serif")
-      .text(function(d) { return d.id; });
+    tempValue.append("text")
+        .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
+        .attr("transform", function(d) { return "translate(" + x(d.value.day) + "," + y0(d.value.temperature) + ")"; })
+        .attr("x", 3)
+        .attr("dy", "0.35em")
+        .style("font", "10px sans-serif")
+        .text(function(d) { return d.id; });
   /***********************************Bar chart *******************************/
 
-var drawBarChart = function(d){
-    var barChartData = d;
- var barMargin = {top: 20, right: 20, bottom: 30, left: 50},
-    bWidth = svg.attr("width") - barMargin.left - barMargin.right,
-    bHeight = svg.attr("height") - barMargin.top - barMargin.bottom;
+    var drawBarChart = function(d){
+        d3.selectAll(".barChart").remove();
+        var barChartData = d;
+        var bsvg = d3.select("#barChart")
+                    .append("svg")
+                    .attr('class', 'barChart')
+                    .attr("height","500")
+                    .attr("width","960");
+        var barMargin = {top: 20, right: 20, bottom: 30, left: 50},
+            bWidth = bsvg.attr("width") - barMargin.left - barMargin.right,
+            bHeight = bsvg.attr("height") - barMargin.top - barMargin.bottom,
+            g = bsvg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var bx = d3.scaleBand().rangeRound([0, width]).padding(0.1),
-    by = d3.scaleLinear().rangeRound([height, 0]);
-var svgBar = d3.select("body").append("svg")
-    .attr("width", bWidth + margin.left + margin.right)
-    .attr("height", bHeight + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", 
-          "translate(" + margin.left + "," + margin.top + ")");
+        var bx = d3.scaleBand().rangeRound([0, width]).padding(0.1),
+        by = d3.scaleLinear().rangeRound([height, 0]);
 
-   bx.domain(data.map(function(d) { return d.day; }));
-  by.domain([0, d3.max(barChartData, function(c) {  return c.temperature; })
-]);
+        bx.domain(data.map(function(d) { return d.day; }));
+        by.domain([0, d3.max(barChartData, function(c) {  return c.temperature; })
+        ]);
 
 
-svgBar.append("g")
-   .attr("class", "axis")
-      .attr("transform", "translate(0," + bHeight + ")")
-      .call(d3.axisBottom(bx));
+        g.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + bHeight + ")")
+            .call(d3.axisBottom(bx));
 
-svgBar.append("g")
-       .attr("class", "axis")
-      .call(d3.axisLeft(by));
+        g.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(by));
 
-svgBar.selectAll(".bar")
-        .data(barChartData).enter().append("rect")
-      .attr("class", "bar")
-      .attr("x", function(d) {console.log(d); return bx(d.day); })
-      .attr("width", bx.bandwidth())
-      .attr("y", function(d) { return by(d.temperature); })
-      .attr("height", function(d) { return bHeight - by(d.temperature); });
-}
+        var sel = g.selectAll(".bar").data(barChartData).enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", function(d) {console.log(d); return bx(d.day); })
+            .attr("width", bx.bandwidth())
+            .attr("y", function(d) { return by(d.temperature); })
+            .attr("height", function(d) { return bHeight - by(d.temperature); });
+    }
 
 
 </script>
