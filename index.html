@@ -41,8 +41,8 @@ div.tooltip {
     <script>
     var svg = d3.select("#lineChart").append("svg").attr("width","960").attr("height","500"),
     margin = {top: 20, right: 80, bottom: 30, left: 50},
-    width = 890; //svg.attr("width") - margin.left - margin.right,
-    height = 450; //svg.attr("height") - margin.top - margin.bottom,
+    width = 890; 
+    height = 450; 
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var parseTime = d3.timeParse("%d-%b-%y");
@@ -122,22 +122,20 @@ div.tooltip {
         .attr("class", "tooltip")
         .style("opacity", 0);
 
-     
-
     var tempValue = g.selectAll(".tempValue")
         .data(tempratureValues)
         .enter().append("g")
         .attr("class", "tempValue")
         .on("click", function(d){drawBarChart(d.values);})
-        .on("mouseover", mousemove)
-        .on("mousemove", function(d) {
-            
+        .on("mouseover", function(d){
+            var x0 = x.invert(d3.mouse(this)[0]);
+            var y = y0.invert(d3.mouse(this)[1]);
             tootltip.transition()
-            .duration(200)
-            .style("opacity", .9);
-            tootltip.html(formatTime(d.values.day) + "<br/>" + d.id)
-            .style("left", (d3.event.pageX) + "px")
-            .style("top", (d3.event.pageY - 28) + "px");
+                .duration(200)
+                .style("opacity", .9);
+                tootltip.html(formatTime(x0) + "<br/>" + y)
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
         })
         .on("mouseout", function(d) {
             tootltip.transition()
@@ -145,17 +143,6 @@ div.tooltip {
             .style("opacity", 0);
         });
      
-
-
-
-
-  function mousemove() {
-    var x0 = x.invert(d3.mouse(this)[0]);
-    var y = y1.invert(d3.mouse(this)[0]);
-    console.log(y);
-   
-  }
-
 
     tempValue.append("path")
         .attr("class", "line")
@@ -179,6 +166,7 @@ div.tooltip {
                     .attr('class', 'barChart')
                     .attr("height","500")
                     .attr("width","960");
+
         var barMargin = {top: 20, right: 20, bottom: 30, left: 50},
             bWidth = bsvg.attr("width") - barMargin.left - barMargin.right,
             bHeight = bsvg.attr("height") - barMargin.top - barMargin.bottom,
@@ -193,11 +181,9 @@ div.tooltip {
             d.temperature = d.temperature;
         });
 
-        bx.domain(barChartData.map(function(d) {console.log(d.day); return d.day; }));
+        bx.domain(barChartData.map(function(d) {return d.day; }));
         by.domain([0, d3.max(barChartData, function(c) {  return c.temperature; })
         ]);
-
-        
 
         g.append("g")
             .attr("class", "axis")
