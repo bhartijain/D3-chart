@@ -6,7 +6,7 @@
 .line {
   fill: none;
   stroke: steelblue;
-  stroke-width: 1.5px;
+  stroke-width: 3px;
 }
 div.tooltip {
   position: absolute;
@@ -68,6 +68,7 @@ div.tooltip {
 
     data.forEach(function(d){
         d.day = parseTime(d.day);
+         
     });
 
     data.columns = ["day", "minimumTemprature", "maximumTemprature", "precipitation"];
@@ -77,13 +78,13 @@ div.tooltip {
     return {
         id: id,
         values: data.map(function(d) {
+
             return {day: d.day, temperature: d[id]};
         })
         };
     });
 
-    console.log(tempratureValues);
-    x.domain(d3.extent(data, function(d) { return d.day; }));
+    x.domain(d3.extent(data, function(d) {console.log(d.day); return d.day; }));
 
     y0.domain([
         d3.min(tempratureValues, function(c) {  return d3.min(c.values, function(d) { return d.temperature; }); }),
@@ -117,7 +118,7 @@ div.tooltip {
       .attr("transform", "translate(" + width + " ,0)")
       .call(d3.axisRight(y1));
      
-    var div = d3.select("#lineChart").append("div")
+    var tootltip = d3.select("#lineChart").append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
 
@@ -128,20 +129,34 @@ div.tooltip {
         .enter().append("g")
         .attr("class", "tempValue")
         .on("click", function(d){drawBarChart(d.values);})
-        .on("mouseover", function(d) {
-            div.transition()
+        .on("mouseover", mousemove)
+        .on("mousemove", function(d) {
+            
+            tootltip.transition()
             .duration(200)
             .style("opacity", .9);
-            div.html(formatTime(d.values.day) + "<br/>" + d.id)
+            tootltip.html(formatTime(d.values.day) + "<br/>" + d.id)
             .style("left", (d3.event.pageX) + "px")
             .style("top", (d3.event.pageY - 28) + "px");
         })
         .on("mouseout", function(d) {
-            div.transition()
+            tootltip.transition()
             .duration(500)
             .style("opacity", 0);
         });
      
+
+
+
+
+  function mousemove() {
+    var x0 = x.invert(d3.mouse(this)[0]);
+    var y = y1.invert(d3.mouse(this)[0]);
+    console.log(y);
+   
+  }
+
+
     tempValue.append("path")
         .attr("class", "line")
         .attr("d", function(d) { return line(d.values); })
@@ -172,10 +187,17 @@ div.tooltip {
         var bx = d3.scaleBand().rangeRound([0, width]).padding(0.1),
         by = d3.scaleLinear().rangeRound([height, 0]);
 
-        bx.domain(data.map(function(d) { return d.day; }));
+        var formateTime = d3.timeFormat("%d-%b-%y");
+            barChartData.forEach(function(d){
+            d.day = formateTime(d.day);
+            d.temperature = d.temperature;
+        });
+
+        bx.domain(barChartData.map(function(d) {console.log(d.day); return d.day; }));
         by.domain([0, d3.max(barChartData, function(c) {  return c.temperature; })
         ]);
 
+        
 
         g.append("g")
             .attr("class", "axis")
@@ -188,7 +210,7 @@ div.tooltip {
 
         var sel = g.selectAll(".bar").data(barChartData).enter().append("rect")
             .attr("class", "bar")
-            .attr("x", function(d) {console.log(d); return bx(d.day); })
+            .attr("x", function(d) { return bx(d.day); })
             .attr("width", bx.bandwidth())
             .attr("y", function(d) { return by(d.temperature); })
             .attr("height", function(d) { return bHeight - by(d.temperature); });
